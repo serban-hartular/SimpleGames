@@ -1,9 +1,11 @@
+import { DivisibilitySounds } from '../audio/DivisibilitySounds';
 import { Scene, GameObjects, Math as PhaserMath, Utils } from 'phaser';
 import { getDivisors } from '../config/divisibility';
 
 type Balloon = { value: number; view: GameObjects.Container; slot: number };
 
 export class DivisibilityGame extends Scene {
+    private sounds!: DivisibilitySounds;
     private divisors: number[] = [];
     private round = 0;
     private balloons: Balloon[] = [];
@@ -22,6 +24,8 @@ export class DivisibilityGame extends Scene {
     }
 
     create(): void {
+        this.sounds = new DivisibilitySounds();
+        this.events.once('shutdown', () => this.sounds.destroy());
         this.divisors = getDivisors();
         this.round = 0;
         this.results = [];
@@ -127,6 +131,8 @@ export class DivisibilityGame extends Scene {
     private popBalloon(balloon: Balloon): void {
         if (this.finished || !this.balloons.includes(balloon)) return;
         const correct = balloon.value % this.divisors[this.round] === 0;
+        if (correct) this.sounds.pop();
+        else this.sounds.wrong();
         const { x, y } = balloon.view;
         this.balloons.splice(this.balloons.indexOf(balloon), 1);
         balloon.view.destroy();
@@ -154,6 +160,7 @@ export class DivisibilityGame extends Scene {
 
     private finishRound(): void {
         this.finished = true;
+        this.sounds.victory();
         const seconds = (this.time.now - this.startedAt) / 1000;
         this.results.push(seconds);
         this.timer.setText(`Timp: ${seconds.toFixed(1)} s`);

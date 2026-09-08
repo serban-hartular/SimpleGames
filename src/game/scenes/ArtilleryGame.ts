@@ -1,8 +1,10 @@
-import { Scene, GameObjects } from 'phaser';
+import { ArtillerySounds } from '../audio/ArtillerySounds';
+import { Scene, GameObjects, Time } from 'phaser';
 import { Terrain } from '../objects/Terrain';
 import { Projectile } from '../objects/Projectile';
 
 export class ArtilleryGame extends Scene {
+    private sounds!: ArtillerySounds;
     private terrain!: Terrain;
     private cannon!: GameObjects.Graphics;
     private angleLabel!: GameObjects.Text;
@@ -21,6 +23,8 @@ export class ArtilleryGame extends Scene {
     }
 
     create() {
+        this.sounds = new ArtillerySounds();
+        this.events.once('shutdown', () => this.sounds.destroy());
         this.angle = 45;
         this.busy = false;
         this.won = false;
@@ -41,8 +45,8 @@ export class ArtilleryGame extends Scene {
             fontFamily: 'Arial', fontSize: '22px', color: '#fff0ce'
         }).setOrigin(0.5);
         this.button(895, 48, 'MENU', () => this.scene.start('MainMenu'));
-        this.button(160, 650, '−', () => this.adjustAngle(-1));
-        this.button(380, 650, '+', () => this.adjustAngle(1));
+        this.angleButton(160, '−', -1);
+        this.angleButton(380, '+', 1);
         this.fireButton = this.button(535, 650, 'FIRE', () => this.fire());
         this.button(770, 650, 'NEW TARGET', () => this.scene.restart());
         this.add.text(512, 714, 'Dots mark equal time intervals • Wider gaps mean higher speed', {
@@ -61,6 +65,43 @@ export class ArtilleryGame extends Scene {
         button.on('pointerover', () => button.setBackgroundColor('#476d8a'));
         button.on('pointerout', () => button.setBackgroundColor('#355773'));
         return button;
+    }
+
+    private angleButton(x: number, label: string, change: number): void {
+        let repeat: Time.TimerEvent | undefined;
+        const stop = () => {
+            repeat?.remove();
+            repeat = undefined;
+        };
+        const button = this.button(x, 650, label, () => {
+            stop();
+            if (this.busy || this.won) return;
+            this.adjustAngle(change);
+            // Preserve single-click precision, then repeat while held.
+            repeat = this.time.delayedCall(300, () => {
+                this.adjustAngle(change);
+                repeat = this.time.addEvent({
+                    delay: 70,
+                    loop: true,
+                    callback: () => {
+                        if (this.busy || this.won) stop();
+                        else this.adjustAngle(change);
+                    }
+                });
+            });
+        });
+        button.on('pointerout', stop);
+        this.input.on('pointerup', stop);
+        this.input.on('pointerupoutside', stop);
+        this.input.on('gameout', stop);
+        this.game.events.on('blur', stop);
+        this.events.once('shutdown', () => {
+            stop();
+            this.input.off('pointerup', stop);
+            this.input.off('pointerupoutside', stop);
+            this.input.off('gameout', stop);
+            this.game.events.off('blur', stop);
+        });
     }
 
     private adjustAngle(change: number): void {
@@ -91,6 +132,7 @@ export class ArtilleryGame extends Scene {
         this.projectile?.destroy();
         this.busy = true;
         this.shots++;
+        this.sounds.fire();
         this.fireButton.setAlpha(0.45);
         this.status.setText(`Shot ${this.shots} in flight…`);
         const tip = this.muzzle();
@@ -99,6 +141,7 @@ export class ArtilleryGame extends Scene {
 
     private land(x: number, y: number): void {
         this.won = this.terrain.isTargetHit(x, y);
+        this.sounds.land(this.won);
         if (this.won) this.explodeTarget();
         const explosion = this.add.circle(x, y, 8, this.won ? 0xffdd77 : 0xff914d, 0.9);
         this.tweens.add({

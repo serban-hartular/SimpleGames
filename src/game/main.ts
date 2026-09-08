@@ -1,3 +1,5 @@
+import { NavigationGame } from './scenes/NavigationGame';
+import { SnakeGame } from './scenes/SnakeGame';
 import { DivisibilityGame } from './scenes/DivisibilityGame';
 import { MainMenu } from './scenes/MainMenu';
 import { ArtilleryGame } from './scenes/ArtilleryGame';
@@ -18,7 +20,9 @@ const config: Types.Core.GameConfig = {
     scene: [
         MainMenu,
         ArtilleryGame,
-        DivisibilityGame
+        DivisibilityGame,
+        SnakeGame,
+        NavigationGame
     ]
 };
 
