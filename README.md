@@ -114,3 +114,96 @@ Port3 (island) in any order to win. Sail into the highlighted water-side docking
 can be visited in any order; revisiting one does not add progress. The ship stops after all three visits.
 Port placement is seeded. The mission requires at least one island, even when
 islandCount is zero; unsuitable maps retry with successive seeds (shown on screen).
+
+## Fox Raid
+
+Steer with arrow keys or click relative to the fox (the dominant direction wins).
+Turns are queued until the next square; the fox keeps moving until a wall stops it.
+Collect every chicken and pie to win. One dog catching the fox ends the game.
+Collection counts appear below the maze. Chickens wander and flee when they see
+the fox along an unobstructed row or column. Dogs patrol highlighted straight
+corridors and chase faster only while the fox is visible inside that corridor.
+
+Edit `src/game/config/fox.ts` for chicken, pie, and dog counts, movement speeds,
+and a repeatable seed. There is always one player-controlled fox. Counts must
+fit the maze and available patrol corridors. NEW MAZE restarts with a random
+layout unless a seed is configured.
+
+The `assets` mapping optionally replaces each Phaser-drawn figure with an image
+or spritesheet. Supply `url` for an image; add `frameWidth`, `frameHeight`, and
+`animation: { start, end, frameRate }` for a looping animation. Missing assets
+fall back to the procedural figures. See commented examples in the config.
+Rules live in `src/game/logic/FoxBoard.ts`, presentation in `FoxGame.ts`, and
+figure loading/rendering in `src/game/visuals/FoxFigures.ts`.
+Run `node tests/fox.cjs` for maze and gameplay regression checks.
+
+Fox Raid chickens use `speeds.chickenWander` (1.4) and `speeds.chickenFlee` (2.3).
+Fleeing chickens have an orange tint and an exclamation mark. Configure
+`chickenWander < chickenFlee < fox` so they remain catchable.
+Generated effects cover pie eating, chicken catching, new chicken sightings,
+and new dog sightings. Sustained sight does not repeatedly trigger an alert.
+Replace individual effects with audio files through `sounds` in the fox config:
+
+```ts
+sounds: {
+    eatPie: '/assets/chomp.ogg',
+    catchChicken: '/assets/catch.ogg',
+    chickenAlert: '/assets/squawk.ogg',
+    dogAlert: '/assets/bark.ogg'
+}
+```
+
+Omit any entry to use its generated sound. Audio stops on scene exit/restart.
+
+Fox Raid `zoom` is an integer from 1 to 10. Height is `7 + 2 * zoom`; width is
+proportional and rounded to an odd number. Zoom 5 retains 25×17. The maze,
+figures, click area and chicken alert markers scale to the available play area.
+Each `counts` entry accepts `"auto"` or an exact nonnegative integer, for example:
+
+```ts
+zoom: 5,
+counts: { chickens: 'auto', pies: 12, dogs: 'auto' }
+```
+
+Auto counts scale from 8 chickens, 10 pies and 3 dogs at zoom 5, and are limited
+by available space/patrol corridors. Literal counts are honored exactly;
+unavailable space or patrol capacity produces a configuration error. At least
+one edible is required. Save and start a new maze after editing.
+
+## In-game settings (all five games)
+
+Click **⚙ Settings** while a game is open. Gameplay, timers, held angle controls,
+and audio pause while the HTML dialog is open. **Cancel** (or Escape) resumes;
+**Apply & Restart** validates the configuration and starts that game again.
+**Restore Defaults** fills the form with the TypeScript defaults, and needs Apply
+before it changes the game. Divisors and gyres support adding, removing and
+reordering entries. Fox counts offer Auto/Number choices. Fox graphics and sound
+asset mappings are editable as JSON under Advanced, with inline format guidance.
+
+Runtime settings are saved per game in this browser's localStorage. They override
+the source defaults on later visits; they do not edit `.ts` files. Use Restore
+Defaults after changing a source default if you already have a saved override.
+Export/Import JSON saves or transfers setups. Invalid imports/settings show an
+error and leave the current game intact. If browser storage is unavailable,
+settings still apply for the current session. Artillery settings live in
+`src/game/config/artillery.ts`; other defaults remain in their existing files.
+
+Shared implementation: `src/game/settings/store.ts` and `dialog.ts`.
+Run `node tests/settings.cjs` for validation/storage checks and
+`node tests/fox.cjs` for the maze gameplay regression suite.
+
+
+## Language
+
+Romanian is the default for all games. Choose **Română** or **English** on the
+main menu, or change **Language** in any game's settings and apply/restart.
+The choice applies to all games and is remembered in this browser. The source
+default is `src/game/config/global.ts`; saved browser preferences override it.
+Game instructions, counters, results, menu cards and settings use the shared
+translation catalogs in `src/game/i18n/ro.ts` and `en.ts`.
+
+To add a language, copy a catalog, translate its values (keep keys and `{0}`,
+`{1}` placeholders), then import and register it in `src/game/i18n/index.ts`
+with its native display name. Both language selectors pick it up automatically.
+Missing translations fall back to English. Run `node tests/i18n.cjs` to check
+catalog coverage, interpolation, the default language and saved preferences.

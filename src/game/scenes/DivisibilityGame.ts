@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+import { installSettings } from '../settings/dialog';
 import { DivisibilitySounds } from '../audio/DivisibilitySounds';
 import { Scene, GameObjects, Math as PhaserMath, Utils } from 'phaser';
 import { getDivisors } from '../config/divisibility';
@@ -35,20 +37,21 @@ export class DivisibilityGame extends Scene {
         this.prompt = this.add.text(40, 30, '', {
             fontFamily: 'Arial', fontSize: '28px', color: '#fff0ce'
         });
-        this.add.text(40, 78, 'Divizibilitate • Găsește numerele potrivite!', {
+        this.add.text(40, 78, t("Divizibilitate • Găsește numerele potrivite!"), {
             fontFamily: 'Arial', fontSize: '18px', color: '#b9cbd7'
         });
         this.add.rectangle(330, 428, 580, 580, 0x233e56).setStrokeStyle(2, 0x54728a);
         this.timer = this.add.text(660, 155, '', { fontFamily: 'Arial', fontSize: '30px', color: '#fff0ce' });
         this.remaining = this.add.text(660, 210, '', { fontFamily: 'Arial', fontSize: '21px', color: '#b9cbd7' });
         this.add.text(660, 280,
-            'Apasă pe baloanele cu\nnumere divizibile cu N.\n\nO greșeală adaugă două\nbaloane: unul potrivit\nși unul nepotrivit.\n\nRunda se încheie când\nnu mai sunt baloane\ncu numere potrivite.',
+            t("Apasă pe baloanele cu\nnumere divizibile cu N.\n\nO greșeală adaugă două\nbaloane: unul potrivit\nși unul nepotrivit.\n\nRunda se încheie când\nnu mai sunt baloane\ncu numere potrivite."),
             { fontFamily: 'Arial', fontSize: '19px', color: '#b9cbd7', lineSpacing: 6 });
-        this.add.text(660, 640, 'MENIU', {
+        this.add.text(660, 640, t("MENIU"), {
             fontFamily: 'Arial', fontSize: '24px', color: '#ffffff',
             backgroundColor: '#355773', padding: { x: 24, y: 14 }
         }).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.scene.start('MainMenu'));
         this.startRound();
+        installSettings(this, 'DivisibilityGame', this.sounds);
     }
 
     private startRound(): void {
@@ -58,7 +61,7 @@ export class DivisibilityGame extends Scene {
         this.balloons = [];
         this.gridSize = 4;
         this.finished = false;
-        this.prompt.setText(`Sparge baloanele cu numere divizibile la ${this.divisors[this.round]}`);
+        this.prompt.setText(t("Sparge baloanele cu numere divizibile la {0}", this.divisors[this.round]));
         // Six from each number range and six divisible overall. Large divisors
         // may have fewer than three distinct multiples below 100.
         const lowMatches = Math.min(3, Math.floor(99 / this.divisors[this.round]));
@@ -70,7 +73,7 @@ export class DivisibilityGame extends Scene {
         Utils.Array.Shuffle(initial).forEach(({ divisible, below100 }) => this.spawnBalloon(divisible, below100));
         this.startedAt = this.time.now;
         this.updateRemaining();
-        this.timer.setText('Timp: 0.0 s');
+        this.timer.setText(t("Timp: 0.0 s"));
     }
 
     private spawnBalloon(divisible: boolean, below100?: boolean): void {
@@ -155,7 +158,7 @@ export class DivisibilityGame extends Scene {
 
     private updateRemaining(): void {
         const count = this.balloons.filter(balloon => balloon.value % this.divisors[this.round] === 0).length;
-        this.remaining.setText(`Runda ${this.round + 1}/${this.divisors.length}\nBaloane potrivite: ${count}`);
+        this.remaining.setText(t("Runda {0}/{1}\nBaloane potrivite: {2}", this.round + 1, this.divisors.length, count));
     }
 
     private finishRound(): void {
@@ -163,20 +166,20 @@ export class DivisibilityGame extends Scene {
         this.sounds.victory();
         const seconds = (this.time.now - this.startedAt) / 1000;
         this.results.push(seconds);
-        this.timer.setText(`Timp: ${seconds.toFixed(1)} s`);
+        this.timer.setText(t("Timp: {0} s", seconds.toFixed(1)));
         const lastRound = this.round === this.divisors.length - 1;
         const panel = this.add.rectangle(330, 428, 548, 360, 0x102438, 0.98).setStrokeStyle(2, 0xffd166);
-        const title = this.add.text(330, 290, lastRound ? 'Felicitări!' : 'Bravo!', {
+        const title = this.add.text(330, 290, lastRound ? t("Felicitări!") : t("Bravo!"), {
             fontFamily: 'Arial', fontSize: '32px', color: '#fff0ce'
         }).setOrigin(0.5);
         const message = lastRound
-            ? this.divisors.map((divisor, i) => `Divizibile la ${divisor}: ${this.results[i].toFixed(1)} s`).join('\n')
-            : `Ai spart toate baloanele potrivite\nîn ${seconds.toFixed(1)} secunde!`;
+            ? this.divisors.map((divisor, i) => t("Divizibile la {0}: {1} s", divisor, this.results[i].toFixed(1))).join('\n')
+            : t("Ai spart toate baloanele potrivite\nîn {0} secunde!", seconds.toFixed(1));
         const result = this.add.text(330, 410, message, {
             fontFamily: 'Arial', fontSize: '23px', color: '#b9cbd7', align: 'center', lineSpacing: 12
         }).setOrigin(0.5);
         if (result.height > 190) result.setScale(190 / result.height);
-        const next = this.add.text(330, 540, lastRound ? 'JOACĂ DIN NOU' : `CONTINUĂ → ${this.divisors[this.round + 1]}`, {
+        const next = this.add.text(330, 540, lastRound ? t("JOACĂ DIN NOU") : t("CONTINUĂ → {0}", this.divisors[this.round + 1]), {
             fontFamily: 'Arial', fontSize: '23px', color: '#ffffff',
             backgroundColor: '#355773', padding: { x: 22, y: 14 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -191,6 +194,6 @@ export class DivisibilityGame extends Scene {
     }
 
     update(): void {
-        if (!this.finished) this.timer.setText(`Timp: ${((this.time.now - this.startedAt) / 1000).toFixed(1)} s`);
+        if (!this.finished) this.timer.setText(t("Timp: {0} s", ((this.time.now - this.startedAt) / 1000).toFixed(1)));
     }
 }

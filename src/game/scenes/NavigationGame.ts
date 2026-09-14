@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+import { installSettings } from '../settings/dialog';
 import { NavigationSounds } from '../audio/NavigationSounds';
 import { NavigationMap, NavigationPort } from '../logic/NavigationMap';
 import { Scene, GameObjects, Input } from 'phaser';
@@ -31,20 +33,20 @@ export class NavigationGame extends Scene {
         if (!Number.isFinite(config.crosswindSpeedFactor) || config.crosswindSpeedFactor < 0 || config.crosswindSpeedFactor > 1
             || !Number.isFinite(config.leeway) || config.leeway < 0 || config.leeway > 1
             || !Number.isFinite(config.fullSpeed) || config.fullSpeed <= 0) {
-            throw new Error('Navigation: speed factors must be between 0 and 1, and fullSpeed must be positive and finite.');
+            throw new Error(t("Navigation: speed factors must be between 0 and 1, and fullSpeed must be positive and finite."));
         }
         this.sounds = new NavigationSounds();
         this.sounds.unlock();
         this.events.once('shutdown', () => this.sounds.destroy());
         this.cameras.main.setBackgroundColor('#182c42');
-        this.add.text(32, 28, 'CARAVEL', { fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce' });
-        this.add.text(32, 82, 'Click the ocean to steer. Visit all three docking rings in any order.', {
+        this.add.text(32, 28, t("CARAVEL"), { fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce' });
+        this.add.text(32, 82, t("Click the ocean to steer. Visit all three docking rings in any order."), {
             fontFamily: 'Arial', fontSize: '20px', color: '#b9cbd7'
         });
         const { x, y, columns, rows, cell } = this.ocean;
         if (!Number.isInteger(config.islandCount) || config.islandCount < 0 || config.islandCount > 12
             || (config.seed !== null && !Number.isInteger(config.seed))) {
-            throw new Error('Use an integer seed (or null) and islandCount from 0 to 12.');
+            throw new Error(t("Use an integer seed (or null) and islandCount from 0 to 12."));
         }
         let seed = config.seed ?? Math.floor(Math.random() * 4294967296);
         this.ports = [];
@@ -56,7 +58,7 @@ export class NavigationGame extends Scene {
             if (ports) { this.ports = ports; break; }
             seed = (seed + 1) >>> 0;
         }
-        if (this.ports.length !== 3) throw new Error('Could not generate three accessible ports. Try another map seed.');
+        if (this.ports.length !== 3) throw new Error(t("Could not generate three accessible ports. Try another map seed."));
         this.visitedPorts.clear();
         this.portMarkers = [];
         this.bumpedUntil = 0;
@@ -137,22 +139,23 @@ export class NavigationGame extends Scene {
             }).setOrigin(0.5).setDepth(5);
         });
         this.updateMission();
-        this.add.text(884, 684, 'MENU', { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff',
+        this.add.text(884, 684, t("MENU"), { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff',
             backgroundColor: '#355773', padding: { x: 14, y: 8 }
         }).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.scene.start('MainMenu'));
-        this.add.text(32, 713, 'Land blocks the caravel. Map edges wrap. Gold marks the local wind.', {
+        this.add.text(32, 713, t("Land blocks the caravel. Map edges wrap. Gold marks the local wind."), {
             fontFamily: 'Arial', fontSize: '16px', color: '#b9cbd7'
         });
-        this.add.text(724, 684, 'NEW MAP', { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff',
+        this.add.text(724, 684, t("NEW MAP"), { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff',
             backgroundColor: '#355773', padding: { x: 14, y: 8 }
         }).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.scene.restart());
-        this.add.text(32, 741, `Map seed: ${seed}`, { fontFamily: 'Arial', fontSize: '14px', color: '#b9cbd7' });
+        this.add.text(32, 741, t("Map seed: {0}", seed), { fontFamily: 'Arial', fontSize: '14px', color: '#b9cbd7' });
         this.update(0, 0);
+        installSettings(this, 'NavigationGame', this.sounds);
     }
 
     private updateMission(): void {
-        this.mission.setText(this.visitedPorts.size === this.ports.length ? 'YOU WIN! All ports visited.'
-            : `Visited: ${this.visitedPorts.size}/${this.ports.length}    ` + this.ports.map((port, i) =>
+        this.mission.setText(this.visitedPorts.size === this.ports.length ? t("YOU WIN! All ports visited.")
+            : t("Visited: {0}/{1}    ", this.visitedPorts.size, this.ports.length) + this.ports.map((port, i) =>
                 `${this.visitedPorts.has(i) ? '✓' : '○'} ${port.name}`).join('    '));
         this.portMarkers.forEach((marker, i) => {
             const visited = this.visitedPorts.has(i);
@@ -174,7 +177,7 @@ export class NavigationGame extends Scene {
                 onComplete: () => ring.destroy()
             });
         }
-        const label = this.add.text(x, y - 45, `${port.name} reached!`, {
+        const label = this.add.text(x, y - 45, t("{0} reached!", port.name), {
             fontFamily: 'Arial', fontSize: '24px', fontStyle: 'bold', color: '#ffdf80',
             stroke: '#182c42', strokeThickness: 4
         }).setOrigin(0.5).setDepth(11);
@@ -209,10 +212,10 @@ export class NavigationGame extends Scene {
         this.sunk = true;
         this.add.rectangle(512, 400, 640, 150, 0x102438, 0.96)
             .setStrokeStyle(2, 0xffd166).setDepth(20);
-        this.add.text(512, 380, 'You sank and drowned!', {
+        this.add.text(512, 380, t("You sank and drowned!"), {
             fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce'
         }).setOrigin(0.5).setDepth(21);
-        this.add.text(512, 435, 'Restarting…', {
+        this.add.text(512, 435, t("Restarting…"), {
             fontFamily: 'Arial', fontSize: '20px', color: '#b9cbd7'
         }).setOrigin(0.5).setDepth(21);
         this.time.delayedCall(2500, () => this.scene.restart());
@@ -250,9 +253,9 @@ export class NavigationGame extends Scene {
         this.highlight.setPosition(x + (column + 0.5) * cell, y + (row + 0.5) * cell);
         const wind = this.localWind();
         const velocity = sailingVelocity(this.heading, wind, navigationConfig);
-        this.readout.setText(this.visitedPorts.size === this.ports.length ? 'VOYAGE COMPLETE'
-            : this.time.now < this.bumpedUntil ? 'BUMP! TURN AWAY'
-                : velocity.drifting ? 'DRIFTING DOWNWIND' : 'SAILING');
+        this.readout.setText(this.visitedPorts.size === this.ports.length ? t("VOYAGE COMPLETE")
+            : this.time.now < this.bumpedUntil ? t("BUMP! TURN AWAY")
+                : velocity.drifting ? t("DRIFTING DOWNWIND") : t("SAILING"));
 
     }
 }

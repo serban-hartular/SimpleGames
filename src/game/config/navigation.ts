@@ -16,8 +16,8 @@ export const navigationConfig = {
     offshoreStrength: 0.2,
     // Blend correction over this many coarse wind squares offshore.
     coastalInfluenceDistance: 1.5,
-    crosswindSpeedFactor: 0.25,
+    crosswindSpeedFactor: 0.15,
     leeway: 0.08,
     // Pixels per second at wind magnitude 1, sailing directly downwind.
-    fullSpeed: 50
+    fullSpeed: 90
 };

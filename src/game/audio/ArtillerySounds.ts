@@ -103,6 +103,14 @@ export class ArtillerySounds {
         source.start();
     }
 
+    pause(): void {
+        if (this.context?.state === 'running') void this.context.suspend().catch(() => {});
+    }
+
+    resume(): void {
+        if (!this.disposed && this.context?.state === 'suspended') void this.context.resume().catch(() => {});
+    }
+
     destroy(): void {
         this.stopWhistle();
         this.disposed = true;

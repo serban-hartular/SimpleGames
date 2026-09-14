@@ -1,3 +1,6 @@
+import { t } from '../i18n';
+import { artilleryConfig } from '../config/artillery';
+import { installSettings } from '../settings/dialog';
 import { ArtillerySounds } from '../audio/ArtillerySounds';
 import { Scene, GameObjects, Time } from 'phaser';
 import { Terrain } from '../objects/Terrain';
@@ -11,7 +14,7 @@ export class ArtilleryGame extends Scene {
     private status!: GameObjects.Text;
     private fireButton!: GameObjects.Text;
     private projectile?: Projectile;
-    private angle = 45;
+    private angle = 25;
     private busy = false;
     private won = false;
     private shots = 0;
@@ -25,14 +28,14 @@ export class ArtilleryGame extends Scene {
     create() {
         this.sounds = new ArtillerySounds();
         this.events.once('shutdown', () => this.sounds.destroy());
-        this.angle = 45;
+        this.angle = artilleryConfig.initialAngle;
         this.busy = false;
         this.won = false;
         this.shots = 0;
         this.projectile = undefined;
         this.cameras.main.setBackgroundColor('#182c42');
-        this.add.text(40, 30, 'ARTILLERY', { fontFamily: 'Arial', fontSize: '32px', color: '#fff0ce' });
-        this.add.text(40, 74, 'Adjust your angle. Land within the target’s golden zone.', {
+        this.add.text(40, 30, t("ARTILLERY"), { fontFamily: 'Arial', fontSize: '32px', color: '#fff0ce' });
+        this.add.text(40, 74, t("Adjust your angle. Land within the target’s golden zone."), {
             fontFamily: 'Arial', fontSize: '18px', color: '#b9cbd7'
         });
         this.terrain = new Terrain(this, this.scale.width, this.scale.height);
@@ -41,19 +44,20 @@ export class ArtilleryGame extends Scene {
         this.angleLabel = this.add.text(270, 649, '', {
             fontFamily: 'Arial', fontSize: '26px', color: '#fff0ce'
         }).setOrigin(0.5);
-        this.status = this.add.text(512, 598, 'Ready for your first shot', {
+        this.status = this.add.text(512, 598, t("Ready for your first shot"), {
             fontFamily: 'Arial', fontSize: '22px', color: '#fff0ce'
         }).setOrigin(0.5);
-        this.button(895, 48, 'MENU', () => this.scene.start('MainMenu'));
+        this.button(895, 48, t("MENU"), () => this.scene.start('MainMenu'));
         this.angleButton(160, '−', -1);
         this.angleButton(380, '+', 1);
-        this.fireButton = this.button(535, 650, 'FIRE', () => this.fire());
-        this.button(770, 650, 'NEW TARGET', () => this.scene.restart());
-        this.add.text(512, 714, 'Dots mark equal time intervals • Wider gaps mean higher speed', {
+        this.fireButton = this.button(535, 650, t("FIRE"), () => this.fire());
+        this.button(770, 650, t("NEW TARGET"), () => this.scene.restart());
+        this.add.text(512, 714, t("Dots mark equal time intervals • Wider gaps mean higher speed"), {
             fontFamily: 'Arial', fontSize: '16px', color: '#b9cbd7'
         }).setOrigin(0.5);
         this.drawCannon();
         this.events.once('shutdown', () => this.projectile?.destroy());
+        installSettings(this, 'ArtilleryGame', this.sounds);
     }
 
     private button(x: number, y: number, label: string, action: () => void): GameObjects.Text {
@@ -134,7 +138,7 @@ export class ArtilleryGame extends Scene {
         this.shots++;
         this.sounds.fire();
         this.fireButton.setAlpha(0.45);
-        this.status.setText(`Shot ${this.shots} in flight…`);
+        this.status.setText(t("Shot {0} in flight…", this.shots));
         const tip = this.muzzle();
         this.projectile = new Projectile(this, tip.x, tip.y, this.angle, this.terrain, (x, y) => this.land(x, y));
     }
@@ -154,8 +158,8 @@ export class ArtilleryGame extends Scene {
         });
         const distance = Math.round(Math.abs(x - this.terrain.target.x));
         this.status.setText(this.won
-            ? `You win! ${this.shots} shot${this.shots === 1 ? '' : 's'} — try a new target.`
-            : `Missed ${distance}px ${x < this.terrain.target.x ? 'short' : 'long'}. Adjust your angle and try again.`);
+            ? t("You win! Shots: {0} — try a new target.", this.shots)
+            : t("Missed {0}px {1}. Adjust your angle and try again.", distance, x < this.terrain.target.x ? t('short') : t('long')));
     }
 
     private explodeTarget(): void {

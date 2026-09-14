@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+import { installSettings } from '../settings/dialog';
 import { SnakeSounds } from '../audio/SnakeSounds';
 import { Scene, GameObjects, Input } from 'phaser';
 import { snakeConfig } from '../config/snake';
@@ -20,7 +22,7 @@ export class SnakeGame extends Scene {
 
     create(): void {
         if (!Number.isFinite(snakeConfig.speed) || snakeConfig.speed <= 0) {
-            throw new Error('Snake speed must be a positive, finite number of squares per second.');
+            throw new Error(t("Snake speed must be a positive, finite number of squares per second."));
         }
         this.sounds = new SnakeSounds();
         this.sounds.unlock();
@@ -29,8 +31,8 @@ export class SnakeGame extends Scene {
         this.board = new SnakeBoard(snakeConfig.appleCount);
         this.elapsed = 0;
         this.cameras.main.setBackgroundColor('#182c42');
-        this.add.text(40, 30, 'SNAKE', { fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce' });
-        this.add.text(40, 86, 'Click the field to turn. Cross an edge to wrap around.', {
+        this.add.text(40, 30, t("SNAKE"), { fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce' });
+        this.add.text(40, 86, t("Click the field to turn. Cross an edge to wrap around."), {
             fontFamily: 'Arial', fontSize: '20px', color: '#b9cbd7'
         });
         this.add.rectangle(320, 426, 564, 564, 0x10251f).setStrokeStyle(2, 0x81b875);
@@ -47,11 +49,12 @@ export class SnakeGame extends Scene {
             });
         this.scoreLabel = this.add.text(650, 160, '', { fontFamily: 'Arial', fontSize: '30px', color: '#fff0ce' });
         this.add.text(650, 240,
-            'Eat apples to grow.\nAvoid your own body.\n\nMoving left or right?\nClick above or below.\n\nMoving up or down?\nClick left or right.',
+            t("Eat apples to grow.\nAvoid your own body.\n\nMoving left or right?\nClick above or below.\n\nMoving up or down?\nClick left or right."),
             { fontFamily: 'Arial', fontSize: '21px', color: '#b9cbd7', lineSpacing: 8 });
-        this.button(650, 555, 'RESTART', () => this.scene.restart());
-        this.button(650, 635, 'MENU', () => this.scene.start('MainMenu'));
+        this.button(650, 555, t("RESTART"), () => this.scene.restart());
+        this.button(650, 635, t("MENU"), () => this.scene.start('MainMenu'));
         this.drawBoard();
+        installSettings(this, 'SnakeGame', this.sounds);
     }
 
     private button(x: number, y: number, label: string, action: () => void): void {
@@ -84,7 +87,7 @@ export class SnakeGame extends Scene {
             graphics.fillCircle(x + direction.x * 6 - direction.y * side * 5,
                 y + direction.y * 6 + direction.x * side * 5, 2.5);
         }
-        this.scoreLabel.setText(`Apples eaten: ${this.board.score}`);
+        this.scoreLabel.setText(t("Apples eaten: {0}", this.board.score));
     }
 
     update(_time: number, delta: number): void {
@@ -104,7 +107,7 @@ export class SnakeGame extends Scene {
             if (this.board.ended) {
                 this.add.rectangle(320, 426, 500, 200, 0x182c42, 0.96).setStrokeStyle(2, 0xffd166);
                 this.add.text(320, 426,
-                    `${this.board.won ? 'FIELD CLEARED!' : 'GAME OVER'}\n\nApples eaten: ${this.board.score}`,
+                    t("{0}\n\nApples eaten: {1}", this.board.won ? t('FIELD CLEARED!') : t('GAME OVER'), this.board.score),
                     { fontFamily: 'Arial', fontSize: '30px', color: '#fff0ce', align: 'center' }).setOrigin(0.5);
             }
         }

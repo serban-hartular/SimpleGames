@@ -1,3 +1,6 @@
+import { loadLanguage } from './i18n';
+import { loadSettings } from './settings/store';
+import { FoxGame } from './scenes/FoxGame';
 import { NavigationGame } from './scenes/NavigationGame';
 import { SnakeGame } from './scenes/SnakeGame';
 import { DivisibilityGame } from './scenes/DivisibilityGame';
@@ -22,11 +25,14 @@ const config: Types.Core.GameConfig = {
         ArtilleryGame,
         DivisibilityGame,
         SnakeGame,
-        NavigationGame
+        NavigationGame,
+        FoxGame
     ]
 };
 
 const StartGame = (parent: string) => {
+    loadLanguage();
+    loadSettings();
     return new Game({ ...config, parent });
 }
 

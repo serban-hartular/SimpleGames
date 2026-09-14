@@ -50,6 +50,14 @@ export class SnakeSounds {
         source.start(start);
     }
 
+    pause(): void {
+        if (this.context?.state === 'running') void this.context.suspend().catch(() => {});
+    }
+
+    resume(): void {
+        if (!this.disposed && this.context?.state === 'suspended') void this.context.resume().catch(() => {});
+    }
+
     destroy(): void {
         this.disposed = true;
         if (this.context && this.context.state !== 'closed') void this.context.close().catch(() => {});

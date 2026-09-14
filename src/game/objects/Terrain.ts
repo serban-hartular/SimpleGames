@@ -1,9 +1,10 @@
+import { artilleryConfig } from '../config/artillery';
 import { Scene, Math as PhaserMath } from 'phaser';
 
 /** Owns the ground surface and target placement. */
 export class Terrain {
     readonly target: { x: number; y: number };
-    readonly hitRadius = 38;
+    readonly hitRadius = artilleryConfig.hitRadius;
 
     constructor(scene: Scene, width: number, height: number) {
         const ground = scene.add.graphics();

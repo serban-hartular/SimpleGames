@@ -1,3 +1,5 @@
+import { installMenuLanguage } from '../i18n/selector';
+import { t } from '../i18n';
 import { Scene, GameObjects } from 'phaser';
 
 export class MainMenu extends Scene {
@@ -6,21 +8,23 @@ export class MainMenu extends Scene {
     }
 
     create(): void {
+        installMenuLanguage(this);
         this.cameras.main.setBackgroundColor('#182c42');
-        this.add.text(512, 100, 'SIMPLE GAMES', {
+        this.add.text(512, 100, t("SIMPLE GAMES"), {
             fontFamily: 'Arial', fontSize: '42px', color: '#fff0ce'
         }).setOrigin(0.5);
-        this.add.text(512, 158, 'Choose a game to play', {
+        this.add.text(512, 158, t("Choose a game to play"), {
             fontFamily: 'Arial', fontSize: '22px', color: '#b9cbd7'
         }).setOrigin(0.5);
 
         const games = [
-            { name: 'Artillery', scene: 'ArtilleryGame', preview: () => this.artilleryPreview() },
-            { name: 'Divisibility Game', scene: 'DivisibilityGame', preview: () => this.divisibilityPreview() },
-            { name: 'Snake', scene: 'SnakeGame', preview: () => this.snakePreview() },
-            { name: 'Caravel', scene: 'NavigationGame', preview: () => this.navigationPreview() }
+            { name: t("Artillery"), scene: 'ArtilleryGame', preview: () => this.artilleryPreview() },
+            { name: t("Divisibility Game"), scene: 'DivisibilityGame', preview: () => this.divisibilityPreview() },
+            { name: t("Snake"), scene: 'SnakeGame', preview: () => this.snakePreview() },
+            { name: t("Caravel"), scene: 'NavigationGame', preview: () => this.navigationPreview() },
+            { name: t("Fox Raid"), scene: 'FoxGame', preview: () => this.foxPreview() }
         ];
-        const columns = games.length > 3 ? 2 : games.length;
+        const columns = games.length > 4 ? 3 : games.length > 3 ? 2 : games.length;
         const cardScale = games.length > 3 ? 0.68 : 1;
         games.forEach((game, index) => {
             const row = Math.floor(index / columns);
@@ -47,6 +51,19 @@ export class MainMenu extends Scene {
             });
             hitArea.on('pointerdown', () => this.scene.start(game.scene));
         });
+    }
+
+    private foxPreview(): GameObjects.Graphics {
+        const g = this.add.graphics().fillStyle(0x302e29);
+        g.fillRect(-125, -125, 250, 250);
+        g.fillStyle(0x547448);
+        for (const [x, y, w, h] of [[-115, -110, 90, 25], [20, -110, 95, 25], [-115, -55, 25, 130], [-55, 45, 100, 25], [85, -55, 25, 160]]) g.fillRect(x, y, w, h);
+        g.fillStyle(0xe88a36); g.fillTriangle(-40, -50, -40, 5, 25, 5); g.fillTriangle(25, -50, 25, 5, -40, 5); g.fillCircle(-8, -1, 33);
+        g.fillStyle(0xffeed1); g.fillTriangle(-38, 0, 22, 0, -8, 31);
+        g.fillStyle(0x182c42); g.fillCircle(-22, -7, 4); g.fillCircle(6, -7, 4); g.fillCircle(-8, 20, 4);
+        g.fillStyle(0xf0c478); g.fillEllipse(50, 90, 32, 22);
+        g.fillStyle(0xfff5d8); g.fillCircle(48, -57, 14); g.fillStyle(0xe25446); g.fillCircle(48, -73, 5);
+        return g;
     }
 
     private navigationPreview(): GameObjects.Graphics {

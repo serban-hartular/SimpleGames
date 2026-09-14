@@ -1,10 +1,11 @@
+import { artilleryConfig } from '../config/artillery';
 import { Scene, GameObjects } from 'phaser';
 import { Terrain } from './Terrain';
 
 /** Fixed-step ballistic motion in pixels and seconds, with a persistent trail. */
 export class Projectile {
-    static readonly speed = 570;
-    static readonly gravity = 400;
+    static get speed(): number { return artilleryConfig.launchSpeed; }
+    static get gravity(): number { return artilleryConfig.gravity; }
     private readonly ball: GameObjects.Arc;
     private readonly trail: GameObjects.Graphics;
     private x: number;
