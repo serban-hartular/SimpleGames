@@ -19,14 +19,19 @@ export class SnakeBoard {
         this.fillApples();
     }
 
-    turnToward(x: number, y: number): void {
+    turn(x: number, y: number): void {
         if (this.ended || this.pending) return;
+        // Accept one perpendicular turn per movement tick, never a reversal.
+        if (Math.abs(x) + Math.abs(y) !== 1 || x * this.direction.x + y * this.direction.y !== 0) return;
+        this.pending = { x, y };
+    }
+
+    turnToward(x: number, y: number): void {
         const head = this.snake[0];
-        // Lock one perpendicular turn per movement tick; rapid clicks cannot reverse the snake.
         if (this.direction.x !== 0 && y !== head.y + 0.5) {
-            this.pending = { x: 0, y: y < head.y + 0.5 ? -1 : 1 };
+            this.turn(0, y < head.y + 0.5 ? -1 : 1);
         } else if (this.direction.y !== 0 && x !== head.x + 0.5) {
-            this.pending = { x: x < head.x + 0.5 ? -1 : 1, y: 0 };
+            this.turn(x < head.x + 0.5 ? -1 : 1, 0);
         }
     }
 

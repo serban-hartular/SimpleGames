@@ -32,7 +32,9 @@ export class SnakeGame extends Scene {
         this.elapsed = 0;
         this.cameras.main.setBackgroundColor('#182c42');
         this.add.text(40, 30, t("SNAKE"), { fontFamily: 'Arial', fontSize: '36px', color: '#fff0ce' });
-        this.add.text(40, 86, t("Click the field to turn. Cross an edge to wrap around."), {
+        this.add.text(40, 86, snakeConfig.arrowKeysOnly
+            ? t("Arrow keys to turn. Cross an edge to wrap around.")
+            : t("Arrows or click to turn. Cross an edge to wrap around."), {
             fontFamily: 'Arial', fontSize: '20px', color: '#b9cbd7'
         });
         this.add.rectangle(320, 426, 564, 564, 0x10251f).setStrokeStyle(2, 0x81b875);
@@ -42,14 +44,34 @@ export class SnakeGame extends Scene {
             grid.lineBetween(this.left, this.top + i * 28, this.left + 560, this.top + i * 28);
         }
         this.drawing = this.add.graphics();
-        this.add.zone(320, 426, 560, 560).setInteractive({ useHandCursor: true })
-            .on('pointerdown', (pointer: Input.Pointer) => {
-                this.sounds.unlock();
-                this.board.turnToward((pointer.x - this.left) / this.cellSize, (pointer.y - this.top) / this.cellSize);
-            });
+        if (!snakeConfig.arrowKeysOnly) {
+            this.add.zone(320, 426, 560, 560).setInteractive({ useHandCursor: true })
+                .on('pointerdown', (pointer: Input.Pointer) => {
+                    this.sounds.unlock();
+                    this.board.turnToward((pointer.x - this.left) / this.cellSize, (pointer.y - this.top) / this.cellSize);
+                });
+        }
+        const onKey = (event: KeyboardEvent) => {
+            switch (event.key) {
+                case 'ArrowLeft': this.board.turn(-1, 0); break;
+                case 'ArrowRight': this.board.turn(1, 0); break;
+                case 'ArrowUp': this.board.turn(0, -1); break;
+                case 'ArrowDown': this.board.turn(0, 1); break;
+                default: return;
+            }
+            this.sounds.unlock();
+        };
+        this.input.keyboard?.addCapture(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+        this.input.keyboard?.on('keydown', onKey);
+        this.events.once('shutdown', () => {
+            this.input.keyboard?.off('keydown', onKey);
+            this.input.keyboard?.removeCapture(['UP', 'DOWN', 'LEFT', 'RIGHT']);
+        });
         this.scoreLabel = this.add.text(650, 160, '', { fontFamily: 'Arial', fontSize: '30px', color: '#fff0ce' });
         this.add.text(650, 240,
-            t("Eat apples to grow.\nAvoid your own body.\n\nMoving left or right?\nClick above or below.\n\nMoving up or down?\nClick left or right."),
+            snakeConfig.arrowKeysOnly
+                ? t("Eat apples to grow.\nAvoid your own body.\n\nUse the arrow keys\nto change direction.")
+                : t("Eat apples to grow.\nAvoid your own body.\n\nArrow keys to turn.\n\nClick above/below when\nmoving left/right, or\nleft/right when moving\nup/down."),
             { fontFamily: 'Arial', fontSize: '21px', color: '#b9cbd7', lineSpacing: 8 });
         this.button(650, 555, t("RESTART"), () => this.scene.restart());
         this.button(650, 635, t("MENU"), () => this.scene.start('MainMenu'));

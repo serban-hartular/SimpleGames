@@ -11,6 +11,8 @@ export type FigureAsset = {
 export const foxConfig = {
     // Integer 1–10: height = 7 + 2 * zoom. 5 preserves the 25×17 maze.
     zoom: 3,
+    // Disable click/touch controls; arrow keys steer and Space stops the fox.
+    arrowKeysOnly: false,
     // One player-controlled fox. All speeds are maze squares per second.
     speeds: { fox: 3, chickenWander: 1.4, chickenFlee: 2.3, dogPatrol: 1.8, dogChase: 3.5 },
     // Each count can be "auto" or an exact nonnegative integer.

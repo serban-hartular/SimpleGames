@@ -4,11 +4,15 @@ import { divisibilityConfig } from '../config/divisibility';
 import { snakeConfig } from '../config/snake';
 import { navigationConfig } from '../config/navigation';
 import { foxConfig } from '../config/fox';
+import { robotConfig } from '../config/robot';
+import { validateRobotConfig } from '../logic/RobotBoard';
+import { streetsConfig } from '../config/streets';
+import { validateStreetsConfig } from '../logic/StreetBoard';
 import { FoxBoard } from '../logic/FoxBoard';
 import { NavigationMap } from '../logic/NavigationMap';
 
 export const configs = { ArtilleryGame: artilleryConfig, DivisibilityGame: divisibilityConfig,
-    SnakeGame: snakeConfig, NavigationGame: navigationConfig, FoxGame: foxConfig };
+    SnakeGame: snakeConfig, NavigationGame: navigationConfig, FoxGame: foxConfig, StreetsGame: streetsConfig, RobotGame: robotConfig };
 export type SettingsKey = keyof typeof configs;
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 export const defaults = clone(configs);
@@ -69,6 +73,10 @@ export function validate(key: SettingsKey, value: unknown): void {
         if (c.gyres.length > 8) throw new Error(t("Use at most eight gyres."));
         const map = new NavigationMap(20, 11, { ...c, seed: c.seed ?? 12345, islandCount: Math.max(1, c.islandCount) });
         if (!map.createPorts()) throw new Error(t("These settings did not produce three usable ports. Adjust the gyres or seed."));
+    } else if (key === 'RobotGame') {
+        validateRobotConfig(value as typeof robotConfig);
+    } else if (key === 'StreetsGame') {
+        validateStreetsConfig(value as typeof streetsConfig);
     } else {
         const c = value as typeof foxConfig;
         for (const seed of c.seed === null ? [1, 2, 3] : [c.seed]) new FoxBoard({ ...c, seed });
@@ -97,7 +105,14 @@ export function loadSettings(): void {
     for (const key of Object.keys(configs) as SettingsKey[]) {
         try {
             const stored = localStorage.getItem(storageKey(key));
-            if (stored) { const value: unknown = JSON.parse(stored); validate(key, value); Object.assign(configs[key], value); }
+            if (stored) {
+                let value: unknown = JSON.parse(stored);
+                // Preserve older saved settings that predate the arrows-only option.
+                if ((key === 'SnakeGame' || key === 'FoxGame') && value && typeof value === 'object' && !Array.isArray(value)) {
+                    value = { arrowKeysOnly: defaults[key].arrowKeysOnly, ...value };
+                }
+                validate(key, value); Object.assign(configs[key], value);
+            }
         } catch { /* Invalid or outdated saved settings do not prevent starting a game. */ }
     }
 }

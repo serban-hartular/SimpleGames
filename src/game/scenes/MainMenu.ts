@@ -1,3 +1,4 @@
+import { drawRobot } from '../visuals/RobotFigure';
 import { installMenuLanguage } from '../i18n/selector';
 import { t } from '../i18n';
 import { Scene, GameObjects } from 'phaser';
@@ -22,14 +23,16 @@ export class MainMenu extends Scene {
             { name: t("Divisibility Game"), scene: 'DivisibilityGame', preview: () => this.divisibilityPreview() },
             { name: t("Snake"), scene: 'SnakeGame', preview: () => this.snakePreview() },
             { name: t("Caravel"), scene: 'NavigationGame', preview: () => this.navigationPreview() },
-            { name: t("Fox Raid"), scene: 'FoxGame', preview: () => this.foxPreview() }
+            { name: t("Fox Raid"), scene: 'FoxGame', preview: () => this.foxPreview() },
+            { name: t('Street Driver'), scene: 'StreetsGame', preview: () => this.streetsPreview() },
+            { name: t('Robot Route'), scene: 'RobotGame', preview: () => this.robotPreview() }
         ];
-        const columns = games.length > 4 ? 3 : games.length > 3 ? 2 : games.length;
-        const cardScale = games.length > 3 ? 0.68 : 1;
+        const columns = games.length > 6 ? 4 : games.length > 4 ? 3 : games.length > 3 ? 2 : games.length;
+        const cardScale = games.length > 6 ? 0.6 : games.length > 3 ? 0.68 : 1;
         games.forEach((game, index) => {
             const row = Math.floor(index / columns);
             const rowCount = Math.min(columns, games.length - row * columns);
-            const x = 512 + (index % columns - (rowCount - 1) / 2) * 300;
+            const x = 512 + (index % columns - (rowCount - 1) / 2) * (games.length > 6 ? 240 : 300);
             const y = games.length > 3 ? 280 + row * 265 : 350;
             const border = this.add.rectangle(0, 0, 256, 256, 0x182c42)
                 .setStrokeStyle(2, 0x54728a);
@@ -51,6 +54,57 @@ export class MainMenu extends Scene {
             });
             hitArea.on('pointerdown', () => this.scene.start(game.scene));
         });
+    }
+
+    private robotPreview(): GameObjects.Container {
+        const preview = this.add.container();
+        const g = this.add.graphics().fillStyle(0x214e51);
+        g.fillRect(-125, -125, 250, 250);
+        g.lineStyle(1, 0x65847d);
+        for (let i = -125; i <= 125; i += 50) {
+            g.lineBetween(i, -125, i, 125); g.lineBetween(-125, i, 125, i);
+        }
+        g.fillStyle(0x607387);
+        for (const [x, y] of [[-50, -50], [0, -50], [50, 50]]) g.fillRoundedRect(x - 22, y - 22, 44, 44, 4);
+        const robot = this.add.graphics().setPosition(-50, 50); drawRobot(robot, 66);
+        preview.add([g, this.add.star(50, -50, 5, 11, 25, 0xffd166).setStrokeStyle(2, 0xfff0ce), robot]);
+        return preview;
+    }
+
+    private streetsPreview(): GameObjects.Graphics {
+        const g = this.add.graphics().fillStyle(0x244f46);
+        g.fillRect(-125, -125, 250, 250);
+        for (const [width, color] of [[38, 0x9cae9f], [30, 0x374956]]) {
+            g.lineStyle(width, color);
+            for (const [x1, y1, x2, y2] of [
+                [-75,75,-75,-75], [-75,-75,75,-75], [75,-75,75,0],
+                [75,0,0,0], [0,0,0,75], [0,75,-75,75],
+                [0,-75,0,-30], [75,0,75,75]
+            ]) {
+                g.lineBetween(x1, y1, x2, y2);
+            }
+        }
+        g.lineStyle(3, 0xffd166);
+        for (const [x, y] of [[-37, -75], [38, 0], [-37, 75]]) {
+            g.lineBetween(x - 12, y, x + 12, y);
+            g.lineBetween(x + 12, y, x + 3, y - 7);
+            g.lineBetween(x + 12, y, x + 3, y + 7);
+        }
+        g.fillStyle(0x101d2b);
+        g.fillRoundedRect(-94, 54, 38, 42, 4);
+        g.fillStyle(0xf37b60);
+        g.fillRoundedRect(-88, 45, 26, 58, 6);
+        g.fillStyle(0xbde7e5);
+        g.fillRect(-84, 57, 18, 13);
+        g.fillStyle(0xffd166);
+        g.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 11 : 24;
+            if (i === 0) g.moveTo(75 + Math.cos(a) * r, -75 + Math.sin(a) * r);
+            else g.lineTo(75 + Math.cos(a) * r, -75 + Math.sin(a) * r);
+        }
+        g.closePath(); g.fillPath();
+        return g;
     }
 
     private foxPreview(): GameObjects.Graphics {

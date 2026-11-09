@@ -13,6 +13,7 @@ export function installSettings(scene: Scene, key: SettingsKey, audio?: AudioCon
 .game-settings-button{position:fixed;top:8px;right:8px;z-index:50;padding:8px 14px;border:1px solid #8ca5b7;border-radius:6px;background:#213e55;color:white;cursor:pointer}
 .game-settings{width:min(680px,90vw);max-height:85vh;box-sizing:border-box;overflow:auto;border:2px solid #ffd166;border-radius:12px;background:#182c42;color:#fff0ce;padding:24px;font:16px Arial,sans-serif;z-index:100}
 .game-settings::backdrop{background:#0009}.game-settings h2{margin-top:0}.game-settings p{line-height:1.45}.game-settings fieldset{border:1px solid #54728a;margin:12px 0;padding:12px}.game-settings label{display:block;margin:12px 0}.game-settings input,.game-settings select,.game-settings textarea{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;background:#102438;color:white;border:1px solid #8ca5b7;border-radius:4px;font:inherit}.game-settings textarea{min-height:125px;font-family:monospace}.game-settings button{padding:9px 12px;margin:5px;border:1px solid #8ca5b7;border-radius:4px;background:#355773;color:white;cursor:pointer}.game-settings button[type=submit]{background:#ffe09a;color:#182c42}.game-settings-error{color:#ffb8b8;white-space:pre-wrap}.game-settings-actions{position:sticky;bottom:-24px;padding:12px 0;background:#182c42}.game-settings small{color:#b9cbd7}
+.game-settings input[type=checkbox]{display:inline-block;width:auto;margin:0 0 0 12px;vertical-align:middle}
 `; document.head.append(style);
     }
     const open = document.createElement('button'); open.className = 'game-settings-button'; open.textContent = t("⚙ Settings");
@@ -33,7 +34,7 @@ export function installSettings(scene: Scene, key: SettingsKey, audio?: AudioCon
         };
         const close = () => { dialog?.remove(); dialog = undefined; restore(); open.focus(); };
         dialog = document.createElement('dialog'); dialog.className = 'game-settings'; dialog.setAttribute('aria-label', t("Game settings"));
-        const title = document.createElement('h2'); title.textContent = t("{0} settings", t(({ ArtilleryGame: 'Artillery', DivisibilityGame: 'Divisibility Game', SnakeGame: 'Snake', NavigationGame: 'Caravel', FoxGame: 'Fox Raid' })[key]));
+        const title = document.createElement('h2'); title.textContent = t("{0} settings", t(({ ArtilleryGame: 'Artillery', DivisibilityGame: 'Divisibility Game', SnakeGame: 'Snake', NavigationGame: 'Caravel', FoxGame: 'Fox Raid', StreetsGame: 'Street Driver', RobotGame: 'Robot Route' })[key]));
         const help = document.createElement('p'); help.textContent = t("The game is paused. Apply restarts this game. Changes are saved in this browser; TypeScript defaults are unchanged.");
         const form = document.createElement('form');
         const language = languageField();
@@ -118,10 +119,17 @@ function editor(parent: HTMLElement, value: unknown, template: unknown, name: st
         return () => Object.fromEntries(readers.map(([k, r]) => [k, r()]));
     }
     const wrapper = document.createElement('label'); wrapper.append(document.createTextNode(label(name))); parent.append(wrapper);
+    if (typeof value === 'boolean') {
+        const input = document.createElement('input'); input.type = 'checkbox'; input.checked = value; wrapper.append(input);
+        return () => input.checked;
+    }
     if (name === 'direction') {
         const select = document.createElement('select'); for (const v of ['clockwise', 'anticlockwise']) { const o = new Option(t(v), v); select.add(o); } select.value = String(value); wrapper.append(select); return () => select.value;
     }
     const input = document.createElement('input'); input.type = 'number'; input.step = 'any'; input.value = value === null || value === 'auto' ? '' : String(value); wrapper.append(input);
+    if (name === 'columns' || name === 'rows') { input.min = '2'; input.max = '20'; input.step = '1'; }
+    if (name === 'stepDuration') { input.min = '200'; input.max = '2000'; input.step = 'any'; }
+    if (name === 'difficulty') { input.min = '1'; input.max = '5'; input.step = '1'; }
     if (name === 'seed' || ['chickens', 'pies', 'dogs'].includes(name)) {
         const select = document.createElement('select'), automatic = name === 'seed' ? t("Random") : t("Auto");
         select.add(new Option(automatic, 'auto')); select.add(new Option(t("Number"), 'number'));
@@ -130,8 +138,9 @@ function editor(parent: HTMLElement, value: unknown, template: unknown, name: st
         return () => select.value === 'auto' ? (name === 'seed' ? null : 'auto') : numeric();
     }
     function numeric(): number { if (!input.value.trim() || !Number.isFinite(Number(input.value))) throw new Error(t("{0}: enter a number.", label(name))); return Number(input.value); }
-    const hints: Record<string, string> = { speed: t("Squares per second."), appleCount: t("1–320 simultaneous apples."), landFineness: t("1–30 terrain tiles per wind-square side."), offshoreStrength: t("0–1; 0 disables offshore correction."), coastalInfluenceDistance: t("Distance in wind squares."), fullSpeed: t("Pixels per second at wind magnitude 1."), crosswindSpeedFactor: t("Fraction of full speed at 90° to the wind (0–1)."), leeway: t("Fraction of full speed when drifting upwind (0–1)."), initialAngle: t("10–80 degrees."), launchSpeed: t("Pixels per second."), gravity: t("Pixels per second squared."), hitRadius: t("Pixels from the target that count as a hit.") };
+    const hints: Record<string, string> = { columns: t("2–20 squares."), rows: t("2–20 squares."), stepDuration: t("200–2000 milliseconds per instruction."), speed: t("Squares per second."), appleCount: t("1–320 simultaneous apples."), landFineness: t("1–30 terrain tiles per wind-square side."), offshoreStrength: t("0–1; 0 disables offshore correction."), coastalInfluenceDistance: t("Distance in wind squares."), fullSpeed: t("Pixels per second at wind magnitude 1."), crosswindSpeedFactor: t("Fraction of full speed at 90° to the wind (0–1)."), leeway: t("Fraction of full speed when drifting upwind (0–1)."), initialAngle: t("10–80 degrees."), launchSpeed: t("Pixels per second."), gravity: t("Pixels per second squared."), hitRadius: t("Pixels from the target that count as a hit.") };
     if (hints[name]) { const help = document.createElement('small'); help.textContent = hints[name]; wrapper.append(help); }
     if (name === 'zoom') { const help = document.createElement('small'); help.textContent = t("1–10. Height = 7 + 2 × zoom; larger values mean more, smaller squares."); wrapper.append(help); }
+    if (name === 'difficulty') { const help = document.createElement('small'); help.textContent = t('1–5. Higher levels add deeper branches and more misleading distances. Multiple routes remain open.'); wrapper.append(help); }
     return numeric;
 }

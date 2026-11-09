@@ -31,7 +31,9 @@ export class FoxGame extends Scene {
         this.figures = []; this.accumulator = 0; this.announced = false;
         this.cameras.main.setBackgroundColor('#182c42');
         this.add.text(112, 24, t("FOX RAID"), { fontFamily: 'Arial', fontSize: '34px', color: '#fff0ce' });
-        this.add.text(112, 73, t("Arrows or click to steer • Steal every chicken and pie • Avoid the dogs"), {
+        this.add.text(112, 73, foxConfig.arrowKeysOnly
+            ? t("Arrows to steer • Steal every chicken and pie • Avoid the dogs")
+            : t("Arrows or click to steer • Steal every chicken and pie • Avoid the dogs"), {
             fontFamily: 'Arial', fontSize: '18px', color: '#b9cbd7'
         });
         const maze = this.add.graphics();
@@ -42,13 +44,15 @@ export class FoxGame extends Scene {
         }
         maze.lineStyle(5, 0xe87563, 0.35);
         for (const dog of this.board.dogs) maze.lineBetween(this.px(dog.start.x), this.py(dog.start.y), this.px(dog.end.x), this.py(dog.end.y));
-        this.add.zone(512, this.top + this.board.height * this.cell / 2, this.board.width * this.cell, this.board.height * this.cell)
-            .setInteractive({ useHandCursor: true }).on('pointerdown', (p: Input.Pointer) => {
-                this.sounds.unlock();
-                const dx = p.x - this.px(this.board.fox.x), dy = p.y - this.py(this.board.fox.y);
-                if (Math.abs(dx) <= this.cell * 0.4375 && Math.abs(dy) <= this.cell * 0.4375) this.board.stop();
-                else this.board.steer(dx, dy);
-            });
+        if (!foxConfig.arrowKeysOnly) {
+            this.add.zone(512, this.top + this.board.height * this.cell / 2, this.board.width * this.cell, this.board.height * this.cell)
+                .setInteractive({ useHandCursor: true }).on('pointerdown', (p: Input.Pointer) => {
+                    this.sounds.unlock();
+                    const dx = p.x - this.px(this.board.fox.x), dy = p.y - this.py(this.board.fox.y);
+                    if (Math.abs(dx) <= this.cell * 0.4375 && Math.abs(dy) <= this.cell * 0.4375) this.board.stop();
+                    else this.board.steer(dx, dy);
+                });
+        }
         const add = (entity: Point & { caught?: boolean }, kind: FoxFigure) => this.figures.push({ entity, sprite: FoxFigures.create(this, kind).setDisplaySize(this.cell * 0.875, this.cell * 0.875) });
         this.board.pies.forEach(p => add(p, 'pie')); this.board.chickens.forEach(p => add(p, 'chicken'));
         this.board.dogs.forEach(p => add(p, 'dog')); add(this.board.fox, 'fox');
@@ -65,7 +69,9 @@ export class FoxGame extends Scene {
         this.input.keyboard?.on('keydown', onKey);
         this.events.once('shutdown', () => { this.input.keyboard?.off('keydown', onKey); this.input.keyboard?.removeCapture(['UP', 'DOWN', 'LEFT', 'RIGHT', 'SPACE']); });
         this.counters = this.add.text(112, 681, '', { fontFamily: 'Arial', fontSize: '23px', color: '#fff0ce' });
-        this.add.text(112, 723, t("Space or click the fox to stop. Red paths mark dog patrols."), { fontFamily: 'Arial', fontSize: '16px', color: '#b9cbd7' });
+        this.add.text(112, 723, foxConfig.arrowKeysOnly
+            ? t("Space to stop. Red paths mark dog patrols.")
+            : t("Space or click the fox to stop. Red paths mark dog patrols."), { fontFamily: 'Arial', fontSize: '16px', color: '#b9cbd7' });
         this.button(635, t("NEW MAZE"), () => this.scene.restart()); this.button(832, t("MENU"), () => this.scene.start('MainMenu'));
         this.renderActors();
         installSettings(this, 'FoxGame', this.sounds);

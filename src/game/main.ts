@@ -1,6 +1,8 @@
 import { loadLanguage } from './i18n';
 import { loadSettings } from './settings/store';
 import { FoxGame } from './scenes/FoxGame';
+import { RobotGame } from './scenes/RobotGame';
+import { StreetsGame } from './scenes/StreetsGame';
 import { NavigationGame } from './scenes/NavigationGame';
 import { SnakeGame } from './scenes/SnakeGame';
 import { DivisibilityGame } from './scenes/DivisibilityGame';
@@ -26,7 +28,9 @@ const config: Types.Core.GameConfig = {
         DivisibilityGame,
         SnakeGame,
         NavigationGame,
-        FoxGame
+        FoxGame,
+        StreetsGame,
+        RobotGame
     ]
 };
 

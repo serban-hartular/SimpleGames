@@ -52,15 +52,20 @@ fully exhausted, no balloon of that type is added. Save and reload the game.
 
 ## Snake
 
-Choose Snake from the menu. Click above/below the head while moving horizontally,
-or left/right while moving vertically. The snake wraps at every edge. Apples
+Choose Snake from the menu. Use the arrow keys to turn, or click above/below the
+head while moving horizontally, or left/right while moving vertically. Enable
+**Arrow keys only** in **⚙ Settings** and apply to disable click/touch steering.
+The snake accepts one turn per movement step and cannot reverse directly.
+The snake wraps at every edge. Apples
 grow the snake by one square; touching its own body ends the game. Score equals
 apples eaten. Use RESTART to play again or MENU to return to game selection.
 
-Edit `src/game/config/snake.ts` to set `appleCount` (default 3) and `speed`
-(default 3 squares per second), then reload. Lower `speed` values make the snake slower.
+Edit `src/game/config/snake.ts` to set `appleCount` (default 3), `speed`
+(default 2 squares per second), and `arrowKeysOnly` (default false), then reload.
+Lower `speed` values make the snake slower.
 Apples occupy unique free interior cells, never the outermost rows or columns. Near a full board, their count is limited to
 available interior cells. Filling the entire field wins the game.
+Run `node tests/snake.cjs` for keyboard, pointer and turn-rule regression checks.
 
 ## Caravel navigation
 
@@ -118,6 +123,9 @@ islandCount is zero; unsuitable maps retry with successive seeds (shown on scree
 ## Fox Raid
 
 Steer with arrow keys or click relative to the fox (the dominant direction wins).
+Enable **Arrow keys only** in **⚙ Settings** and apply to disable click/touch
+controls. Space still stops the fox. The source default is `arrowKeysOnly: false`
+in `src/game/config/fox.ts`.
 Turns are queued until the next square; the fox keeps moving until a wall stops it.
 Collect every chicken and pie to win. One dog catching the fox ends the game.
 Collection counts appear below the maze. Chickens wander and flee when they see
@@ -136,6 +144,7 @@ fall back to the procedural figures. See commented examples in the config.
 Rules live in `src/game/logic/FoxBoard.ts`, presentation in `FoxGame.ts`, and
 figure loading/rendering in `src/game/visuals/FoxFigures.ts`.
 Run `node tests/fox.cjs` for maze and gameplay regression checks.
+Run `node tests/fox-controls.cjs` for the two control modes and keyboard cleanup.
 
 Fox Raid chickens use `speeds.chickenWander` (1.4) and `speeds.chickenFlee` (2.3).
 Fleeing chickens have an orange tint and an exclamation mark. Configure
@@ -170,7 +179,85 @@ by available space/patrol corridors. Literal counts are honored exactly;
 unavailable space or patrol capacity produces a configuration error. At least
 one edible is required. Save and start a new maze after editing.
 
-## In-game settings (all five games)
+## Street Driver
+
+Choose **Street Driver** (Romanian: **La volan**) from the main menu. Drive to the
+square with the golden star. **Up** advances exactly one street square;
+**Left** and **Right** rotate the car 90° in place, relative to its current
+heading. Each key press performs one action; holding a key does not repeat it.
+The matching on-screen buttons also work with mouse/touch. Moves slide between
+squares and turns rotate the car in place. Controls are disabled until each
+animation finishes; inputs during an animation are ignored rather than queued.
+
+Gold arrows show the allowed direction on one-way streets; dashed white lines
+mark two-way streets. Driving against an arrow returns the car to the green
+starting square with a brief fade and restores its original heading. Driving where
+there is no street leaves the car in place. The counters keep track of successful
+forward steps and wrong-way resets. **TRY AGAIN** retries the same map and clears
+the counters; **NEW MAP** generates another network (or repeats a configured seed).
+
+Maps are generated as a graph of route choices, then embedded as orthogonal
+streets. Two branches rejoin at the destination, giving shorter and longer
+successful routes; other branches end in recoverable dead ends. Empty squares
+stay empty, so nearby roads are connected only where a street is drawn.
+
+The layout deliberately makes geometric proximity misleading. A fork can offer
+a street that looks closer to the star but leaves a longer legal route, and the
+successful route may initially lead away. The starting point and destination
+vary with the seed and can both lie inside the map, rather than at corners.
+
+In **⚙ Settings**, set **Difficulty** from 1 to 5 (default 2). Higher levels
+increase branch depth, the difference between route lengths, and the mismatch
+between visible proximity and actual driving distance. Maps keep the larger
+squares, from 5×4 to 7×5. Apply & Restart starts a map at that difficulty.
+Set **Seed** to an unsigned integer to reproduce a network, or choose Random
+for a fresh one each time.
+Defaults live in `src/game/config/streets.ts`; saved browser settings override them.
+
+Graph generation and spatial embedding live in `src/game/logic/StreetNetwork.ts`;
+driving rules live in `src/game/logic/StreetBoard.ts`, and rendering and controls
+live in `src/game/scenes/StreetsGame.ts`.
+Run `node tests/streets.cjs` for generation, reachability, driving and control checks.
+
+## Robot Route
+
+Choose **Robot Route** (Romanian: **Traseul robotului**) from the menu.
+
+1. **Design the board**: drag the robot and star to separate, free squares.
+   Click/tap an empty square to create an obstacle, or an obstacle to remove it.
+   Invalid drops leave pieces at their previous positions. **Rotate starting
+   direction** turns the robot 90° clockwise. Its gold nose and face show the
+   front. **Clear obstacles** leaves the robot and star in place.
+2. **Program the robot**: use the three icon buttons to insert **Move forward**,
+   **Turn left**, or **Turn right** at the highlighted gold insertion line.
+   Select a **+** line to insert elsewhere; **×** deletes that instruction.
+   Forward moves one square; turns rotate 90° in place. Longer programs use
+   pages of eighteen instructions, with previous/next buttons. Up to 1000 instructions
+   are supported. **Clear program** removes all commands.
+3. **GO** always starts at the designed position and heading. The current
+   instruction highlights as the robot moves/turns with synthesized sounds.
+   Playback automatically follows the current page. An obstacle or board edge
+   stops the attempt immediately. Success requires being on the star after the
+   **entire** program, and triggers confetti and a fanfare. Failed attempts play a
+   descending sad sound and make the robot droop with a frown and a floating sad
+   face. They keep the program for editing. **Reset robot** restores the start;
+   **STOP** interrupts playback and restores the start while keeping the program.
+   Clicking **Design the board** always clears the program and resets the robot,
+   including during playback; the board design stays in place.
+
+In **⚙ Settings**, set **Columns** and **Rows** (2–20, both default to 10), and
+**Step duration** (200–2000 milliseconds per instruction, default 600). Applying
+settings starts a fresh board; opening the dialog pauses animation and audio.
+Board designs and programs last for the current game session; only settings are
+saved in browser storage.
+
+Defaults: `src/game/config/robot.ts`. Rules: `src/game/logic/RobotBoard.ts`.
+Presentation: `src/game/scenes/RobotGame.ts`. Procedural robot/icons:
+`src/game/visuals/RobotFigure.ts`. Audio: `src/game/audio/RobotSounds.ts`.
+Run `node tests/robot.cjs` for placement, program editing, playback, collision,
+retry and configuration checks, including 400 independent execution simulations.
+
+## In-game settings (all seven games)
 
 Click **⚙ Settings** while a game is open. Gameplay, timers, held angle controls,
 and audio pause while the HTML dialog is open. **Cancel** (or Escape) resumes;
