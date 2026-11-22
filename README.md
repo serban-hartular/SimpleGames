@@ -257,7 +257,75 @@ Presentation: `src/game/scenes/RobotGame.ts`. Procedural robot/icons:
 Run `node tests/robot.cjs` for placement, program editing, playback, collision,
 retry and configuration checks, including 400 independent execution simulations.
 
-## In-game settings (all seven games)
+## Monster Words
+
+Choose **Monster Words** (Romanian: **Monstrul literelor**). Read the prompt and
+choose letters using the on-screen alphabet or the keyboard. A correct guess
+reveals every occurrence of that letter; a wrong guess moves the monster exactly
+one square towards its yellow friend. On the last allowed mistake, the monster
+gulps the friend in a cartoon animation and reveals the answer. Guess the full
+word first to save the friend. Repeated guesses and pre-revealed letters cost
+nothing; input is locked during the monster's movement and gulp.
+**RETRY WORD** repeats the same challenge; **NEXT WORD** picks another one.
+Each question appears once per shuffled cycle, with no immediate repeat between
+cycles when there is more than one question.
+
+### Edit prompts and answers
+
+Edit `public/data/monster-words.tsv` as UTF-8 text or with a spreadsheet editor.
+The first row must contain `prompt` and `answer`, separated by a **tab**. Each
+following row contains one prompt and answer, also separated by a tab:
+
+```tsv
+prompt	answer
+Fizică: un corp staționar este un corp în...	REPAOS
+Matematică: un poligon cu trei laturi se numește...	TRIUNGHI
+```
+
+Prompts can have 1–220 characters. Answers can have 1–32 characters, including
+Latin letters, spaces, hyphens and apostrophes, and must contain at least one
+letter. Answers are converted to uppercase. Spaces and punctuation are already
+visible. Accented letters share a key: A also reveals Ă/Â, I reveals Î, S reveals
+Ș/Ş, and T reveals Ț/Ţ. The displayed answer retains its accents. Other Latin
+accents, such as É, similarly use their unaccented key.
+
+Blank lines and lines starting with `#` are ignored. Spreadsheet-style quoted
+fields, doubled quote escapes, BOM and Windows line endings are accepted.
+Invalid data shows the line number and an explanation instead of starting a
+broken round. Save the file and return to the game from the menu to reload it,
+or use **RELOAD WORDS** after an error. TSV content is displayed verbatim;
+changing the interface language does not translate the questions. The starter
+bank contains Romanian school questions and the requested REPAOS example.
+For production, rebuild and deploy after editing the TSV (or replace the served
+`data/monster-words.tsv` file directly).
+
+### Difficulty algorithm
+
+`src/game/config/monster.ts` sets `difficulty` from 1 (easy) to 5 (hard), default
+3. It is also editable in **⚙ Settings**. Browser-saved settings override source
+defaults; use Restore Defaults after changing a source default.
+
+Let `U` be the number of distinct letter keys in the answer and `d` the difficulty:
+
+- Pre-reveal `min(U - 1, floor(U × (5 - d) / 8))` letter keys. Rank keys by fewest
+  occurrences, then by their first occurrence's distance from the word's centre,
+  then left to right. Reveal **all** occurrences of selected keys. This is
+  deterministic and always leaves at least one group to guess.
+- Allow `clamp(7 - d + ceil(U / 4), 3, 10)` wrong guesses. This is also the number
+  of monster steps until the gulp. Repeated letters and punctuation do not
+  inflate the allowance. Higher difficulty never adds hints or mistakes.
+
+For **REPAOS** at difficulty 3, `U = 6`: one hint (**P**), displayed as
+`_ _ P _ _ _`, and **6** allowed mistakes. At difficulty 5, there are no hints
+and **4** allowed mistakes.
+
+Rules and TSV parsing: `src/game/logic/MonsterWords.ts`. Scene:
+`src/game/scenes/MonsterGame.ts`. Procedural characters:
+`src/game/visuals/MonsterFigures.ts`; sounds: `src/game/audio/MonsterSounds.ts`.
+Run `node tests/monster.cjs` for data parsing, difficulty, accents, repeated
+letters, round selection, and win/loss regression checks.
+
+## In-game settings (all eight games)
 
 Click **⚙ Settings** while a game is open. Gameplay, timers, held angle controls,
 and audio pause while the HTML dialog is open. **Cancel** (or Escape) resumes;

@@ -34,13 +34,13 @@ export function installSettings(scene: Scene, key: SettingsKey, audio?: AudioCon
         };
         const close = () => { dialog?.remove(); dialog = undefined; restore(); open.focus(); };
         dialog = document.createElement('dialog'); dialog.className = 'game-settings'; dialog.setAttribute('aria-label', t("Game settings"));
-        const title = document.createElement('h2'); title.textContent = t("{0} settings", t(({ ArtilleryGame: 'Artillery', DivisibilityGame: 'Divisibility Game', SnakeGame: 'Snake', NavigationGame: 'Caravel', FoxGame: 'Fox Raid', StreetsGame: 'Street Driver', RobotGame: 'Robot Route' })[key]));
+        const title = document.createElement('h2'); title.textContent = t("{0} settings", t(({ ArtilleryGame: 'Artillery', DivisibilityGame: 'Divisibility Game', SnakeGame: 'Snake', NavigationGame: 'Caravel', FoxGame: 'Fox Raid', StreetsGame: 'Street Driver', RobotGame: 'Robot Route', MonsterGame: 'Monster Words' })[key]));
         const help = document.createElement('p'); help.textContent = t("The game is paused. Apply restarts this game. Changes are saved in this browser; TypeScript defaults are unchanged.");
         const form = document.createElement('form');
         const language = languageField();
         const fields = document.createElement('div'); const error = document.createElement('p'); error.className = 'game-settings-error'; error.setAttribute('role', 'alert');
         let read: () => unknown;
-        const render = (value: unknown) => { fields.replaceChildren(); read = editor(fields, value, defaults[key], ''); };
+        const render = (value: unknown) => { fields.replaceChildren(); read = editor(fields, value, defaults[key], '', key); };
         render(clone(configs[key]));
         const actions = document.createElement('div'); actions.className = 'game-settings-actions';
         const button = (text: string, action: () => void) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; actions.append(b); return b; };
@@ -81,7 +81,7 @@ export function installSettings(scene: Scene, key: SettingsKey, audio?: AudioCon
     };
 }
 
-function editor(parent: HTMLElement, value: unknown, template: unknown, name: string): () => unknown {
+function editor(parent: HTMLElement, value: unknown, template: unknown, name: string, game: SettingsKey): () => unknown {
     if (Array.isArray(value)) {
         const group = document.createElement('fieldset'), legend = document.createElement('legend'); legend.textContent = label(name); group.append(legend); parent.append(group);
         let values = clone(value); let readers: (() => unknown)[] = [];
@@ -90,7 +90,7 @@ function editor(parent: HTMLElement, value: unknown, template: unknown, name: st
             list.replaceChildren(); readers = [];
             values.forEach((item, index) => {
                 const row = document.createElement('fieldset'); list.append(row);
-                readers.push(editor(row, item, (template as unknown[])[0], `${index + 1}`));
+                readers.push(editor(row, item, (template as unknown[])[0], `${index + 1}`, game));
                 for (const [text, offset] of [['↑', -1], ['↓', 1], [t("Remove"), 0]] as const) {
                     const b = document.createElement('button'); b.type = 'button'; b.textContent = text;
                     b.onclick = () => { try { values = readers.map(r => r()); if (offset === 0) values.splice(index, 1);
@@ -115,7 +115,7 @@ function editor(parent: HTMLElement, value: unknown, template: unknown, name: st
         }
         const group = name ? document.createElement('fieldset') : document.createElement('div');
         if (name) { const legend = document.createElement('legend'); legend.textContent = label(name); group.append(legend); } parent.append(group);
-        const readers = Object.entries(obj).map(([k, v]) => [k, editor(group, v, source[k], k)] as const);
+        const readers = Object.entries(obj).map(([k, v]) => [k, editor(group, v, source[k], k, game)] as const);
         return () => Object.fromEntries(readers.map(([k, r]) => [k, r()]));
     }
     const wrapper = document.createElement('label'); wrapper.append(document.createTextNode(label(name))); parent.append(wrapper);
@@ -141,6 +141,8 @@ function editor(parent: HTMLElement, value: unknown, template: unknown, name: st
     const hints: Record<string, string> = { columns: t("2–20 squares."), rows: t("2–20 squares."), stepDuration: t("200–2000 milliseconds per instruction."), speed: t("Squares per second."), appleCount: t("1–320 simultaneous apples."), landFineness: t("1–30 terrain tiles per wind-square side."), offshoreStrength: t("0–1; 0 disables offshore correction."), coastalInfluenceDistance: t("Distance in wind squares."), fullSpeed: t("Pixels per second at wind magnitude 1."), crosswindSpeedFactor: t("Fraction of full speed at 90° to the wind (0–1)."), leeway: t("Fraction of full speed when drifting upwind (0–1)."), initialAngle: t("10–80 degrees."), launchSpeed: t("Pixels per second."), gravity: t("Pixels per second squared."), hitRadius: t("Pixels from the target that count as a hit.") };
     if (hints[name]) { const help = document.createElement('small'); help.textContent = hints[name]; wrapper.append(help); }
     if (name === 'zoom') { const help = document.createElement('small'); help.textContent = t("1–10. Height = 7 + 2 × zoom; larger values mean more, smaller squares."); wrapper.append(help); }
-    if (name === 'difficulty') { const help = document.createElement('small'); help.textContent = t('1–5. Higher levels add deeper branches and more misleading distances. Multiple routes remain open.'); wrapper.append(help); }
+    if (name === 'difficulty') { const help = document.createElement('small'); help.textContent = game === 'MonsterGame'
+        ? t('1–5. Higher levels reveal fewer letters and allow fewer wrong guesses.')
+        : t('1–5. Higher levels add deeper branches and more misleading distances. Multiple routes remain open.'); wrapper.append(help); }
     return numeric;
 }

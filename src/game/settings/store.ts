@@ -1,3 +1,5 @@
+import { monsterConfig } from '../config/monster';
+import { validateMonsterConfig } from '../logic/MonsterWords';
 import { t } from '../i18n';
 import { artilleryConfig } from '../config/artillery';
 import { divisibilityConfig } from '../config/divisibility';
@@ -12,7 +14,7 @@ import { FoxBoard } from '../logic/FoxBoard';
 import { NavigationMap } from '../logic/NavigationMap';
 
 export const configs = { ArtilleryGame: artilleryConfig, DivisibilityGame: divisibilityConfig,
-    SnakeGame: snakeConfig, NavigationGame: navigationConfig, FoxGame: foxConfig, StreetsGame: streetsConfig, RobotGame: robotConfig };
+    SnakeGame: snakeConfig, NavigationGame: navigationConfig, FoxGame: foxConfig, StreetsGame: streetsConfig, RobotGame: robotConfig, MonsterGame: monsterConfig };
 export type SettingsKey = keyof typeof configs;
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 export const defaults = clone(configs);
@@ -73,6 +75,8 @@ export function validate(key: SettingsKey, value: unknown): void {
         if (c.gyres.length > 8) throw new Error(t("Use at most eight gyres."));
         const map = new NavigationMap(20, 11, { ...c, seed: c.seed ?? 12345, islandCount: Math.max(1, c.islandCount) });
         if (!map.createPorts()) throw new Error(t("These settings did not produce three usable ports. Adjust the gyres or seed."));
+    } else if (key === 'MonsterGame') {
+        validateMonsterConfig(value as typeof monsterConfig);
     } else if (key === 'RobotGame') {
         validateRobotConfig(value as typeof robotConfig);
     } else if (key === 'StreetsGame') {

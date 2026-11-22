@@ -75,6 +75,15 @@ for (const value of [1, 21, 3.5, '10']) {
 }
 assert.throws(() => store.validate('RobotGame', { columns: 10, rows: 10, stepDuration: 0 }));
 assert.throws(() => store.validate('RobotGame', { columns: 10, rows: 10, stepDuration: 600, unknown: 1 }));
+assert(store.applySettings('MonsterGame', { difficulty: 4 }));
+store.configs.MonsterGame.difficulty = 1; store.loadSettings();
+assert.equal(store.configs.MonsterGame.difficulty, 4);
+assert.equal(store.defaults.MonsterGame.difficulty, 3);
+for (const difficulty of [0, 6, 2.5, '3', null]) {
+    assert.throws(() => store.applySettings('MonsterGame', { difficulty }));
+    assert.equal(store.configs.MonsterGame.difficulty, 4);
+}
+assert.throws(() => store.validate('MonsterGame', { difficulty: 3, unexpected: true }));
 localStorage.setItem = () => { throw new Error('unavailable'); };
 assert.equal(store.applySettings('SnakeGame', { speed: 3, appleCount: 4, arrowKeysOnly: false }), false);
 assert.equal(store.configs.SnakeGame.speed, 3);

@@ -1,3 +1,4 @@
+import { drawMonster, drawYellowFriend } from '../visuals/MonsterFigures';
 import { drawRobot } from '../visuals/RobotFigure';
 import { installMenuLanguage } from '../i18n/selector';
 import { t } from '../i18n';
@@ -25,7 +26,8 @@ export class MainMenu extends Scene {
             { name: t("Caravel"), scene: 'NavigationGame', preview: () => this.navigationPreview() },
             { name: t("Fox Raid"), scene: 'FoxGame', preview: () => this.foxPreview() },
             { name: t('Street Driver'), scene: 'StreetsGame', preview: () => this.streetsPreview() },
-            { name: t('Robot Route'), scene: 'RobotGame', preview: () => this.robotPreview() }
+            { name: t('Robot Route'), scene: 'RobotGame', preview: () => this.robotPreview() },
+            { name: t('Monster Words'), scene: 'MonsterGame', preview: () => this.monsterPreview() }
         ];
         const columns = games.length > 6 ? 4 : games.length > 4 ? 3 : games.length > 3 ? 2 : games.length;
         const cardScale = games.length > 6 ? 0.6 : games.length > 3 ? 0.68 : 1;
@@ -54,6 +56,18 @@ export class MainMenu extends Scene {
             });
             hitArea.on('pointerdown', () => this.scene.start(game.scene));
         });
+    }
+
+    private monsterPreview(): GameObjects.Container {
+        const preview = this.add.container();
+        preview.add(this.add.rectangle(0, 0, 250, 250, 0x23464a));
+        for (let i = 0; i < 5; i++) preview.add(this.add.rectangle(-100 + i * 50, 60, 46, 46, 0x30565d).setStrokeStyle(1, 0x759b9b));
+        const monster = this.add.graphics().setPosition(-78, 65); drawMonster(monster, 70);
+        const friend = this.add.graphics().setPosition(90, 65); drawYellowFriend(friend, 64);
+        preview.add([monster, friend, this.add.text(0, -75, '_ _ P _ _ _', {
+            fontFamily: 'Arial', fontSize: '29px', color: '#fff0ce'
+        }).setOrigin(0.5)]);
+        return preview;
     }
 
     private robotPreview(): GameObjects.Container {

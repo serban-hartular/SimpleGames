@@ -1,5 +1,6 @@
 import { loadLanguage } from './i18n';
 import { loadSettings } from './settings/store';
+import { MonsterGame } from './scenes/MonsterGame';
 import { FoxGame } from './scenes/FoxGame';
 import { RobotGame } from './scenes/RobotGame';
 import { StreetsGame } from './scenes/StreetsGame';
@@ -30,7 +31,8 @@ const config: Types.Core.GameConfig = {
         NavigationGame,
         FoxGame,
         StreetsGame,
-        RobotGame
+        RobotGame,
+        MonsterGame
     ]
 };
 
